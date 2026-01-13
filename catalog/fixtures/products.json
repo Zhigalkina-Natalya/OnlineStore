@@ -1,0 +1,41 @@
+[
+{
+    "model": "catalog.product",
+    "pk": 4,
+    "fields": {
+        "name": "Email рассылка",
+        "description": "Профессиональный сервис для email рассылок",
+        "image": "",
+        "category": 4,
+        "price": "140.00",
+        "created_at": "2025-12-30T12:28:32.534Z",
+        "updated_at": "2025-12-30T12:28:32.534Z"
+    }
+},
+{
+    "model": "catalog.product",
+    "pk": 5,
+    "fields": {
+        "name": "Telegram Bot Starter",
+        "description": "Бот для Telegram с базовой функциональностью",
+        "image": "",
+        "category": 5,
+        "price": "100.00",
+        "created_at": "2025-12-30T12:28:39.150Z",
+        "updated_at": "2025-12-30T12:28:39.150Z"
+    }
+},
+{
+    "model": "catalog.product",
+    "pk": 6,
+    "fields": {
+        "name": "Веб-приложение для аналитики",
+        "description": "Сервис для визуализации и анализа данных",
+        "image": "",
+        "category": 6,
+        "price": "200.00",
+        "created_at": "2025-12-30T12:29:09.942Z",
+        "updated_at": "2025-12-30T12:29:09.942Z"
+    }
+}
+]
