@@ -1,59 +1,53 @@
-from django.shortcuts import render, get_object_or_404, redirect
+from django.views.generic import TemplateView, ListView, DetailView, CreateView
 from django.contrib import messages
 from catalog.models import Product, Category
 
 
 # Create your views here.
-def home(request):
+class HomeView(ListView):
     """
-    Контроллер главной страницы.
-    Получает список всех продуктов из базы данных и передает их в шаблон.
+    Контроллер главной страницы с отображением всех товаров.
     """
-    products = Product.objects.all()
-    context = {'products': products}
-    return render(request, "catalog/home.html", context)
+    model = Product
+    template_name = 'catalog/home.html'
+    context_object_name = 'products'
 
 
-def contacts(request):
-    if request.method == "POST":
+class ProductDetailView(DetailView):
+    """
+    Контроллер страницы одного товара.
+    """
+    model = Product
+    template_name = 'catalog/product_detail.html'
+    context_object_name = 'product'
+
+
+class ContactsView(TemplateView):
+    """
+    Контроллер страницы контактов.
+    """
+    template_name = 'catalog/contacts.html'
+
+    def post(self, request, *args, **kwargs):
         name = request.POST.get("name")
         phone = request.POST.get("phone")
         message_text = request.POST.get("message")
         messages.success(request, "Сообщение успешно отправлено!")
-    return render(request, "catalog/contacts.html")
+        return self.get(request, *args, **kwargs)
 
 
-def product_detail(request, pk):
-    """
-    Контроллер для отображения страницы одного товара.
-    Принимает pk, получает объект из БД и рендерит шаблон.
-    """
-    product = get_object_or_404(Product, pk=pk)
-    context = {'product': product}
-    return render(request, 'catalog/product_detail.html', context)
+class ProductCreateView(CreateView):
+    """Форма добавления нового товара."""
+    model = Product
+    fields = ['name', 'description', 'price', 'category', 'image']
+    template_name = "catalog/product_form.html"
+    success_url = "/"
 
+    def form_valid(self, form):
+        messages.success(self.request, f'Товар "{form.instance.name}" успешно добавлен!')
+        return super().form_valid(form)
 
-def create_product(request):
-    """
-    Контроллер для добавления нового продукта.
-    """
-    categories = Category.objects.all()
-
-    if request.method == 'POST':
-        name = request.POST.get('name')
-        description = request.POST.get('description')
-        price = request.POST.get('price')
-        category_id = request.POST.get('category')
-        image = request.FILES.get('image')
-
-        # Проверяем, выбрана ли категория
-        category = Category.objects.get(pk=category_id)
-
-        # Создаем и сохраняем продукт
-        Product.objects.create(name=name, description=description, price=price, category=category, image=image)
-
-        messages.success(request, f'Товар "{name}" успешно добавлен!')
-        return redirect('catalog:home')
-
-    context = {'categories': categories}
-    return render(request, 'catalog/product_form.html', context)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['categories'] = Category.objects.all()  # ← добавляем категории
+        return context
