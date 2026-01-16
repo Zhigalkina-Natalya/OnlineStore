@@ -11,7 +11,7 @@ class BlogListView(ListView):
 
     def get_queryset(self):
         """Выводим только опубликованные посты"""
-        return BlogPost.objects.filter(is_published=True).order_by('-created_at')
+        return super().get_queryset().filter(is_published=True).order_by('-created_at')
 
 
 class BlogDetailView(DetailView):
