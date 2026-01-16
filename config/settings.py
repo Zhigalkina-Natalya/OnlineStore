@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # Другие установленные приложения
     "catalog",  # добавила приложение
+    'blog', # добавила приложение
 ]
 
 MIDDLEWARE = [
