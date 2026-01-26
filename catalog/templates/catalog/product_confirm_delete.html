@@ -1,0 +1,15 @@
+{% extends 'catalog/base.html' %}
+{% block title %}Удалить товар — SkyStore{% endblock %}
+
+{% block content %}
+<div class="container mt-5 text-center">
+    <div class="card p-4 shadow-sm">
+        <h4>Удалить товар "{{ object.name }}"?</h4>
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Да, удалить</button>
+            <a href="{% url 'catalog:product_detail' object.pk %}" class="btn btn-secondary">Отмена</a>
+        </form>
+    </div>
+</div>
+{% endblock %}
