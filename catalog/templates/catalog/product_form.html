@@ -37,12 +37,6 @@
                     <a href="{% url 'catalog:home' %}" class="btn btn-outline-secondary">Отмена</a>
                 </div>
             </form>
-
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="alert alert-success mt-3">{{ message }}</div>
-                {% endfor %}
-            {% endif %}
         </div>
     </div>
 </div>

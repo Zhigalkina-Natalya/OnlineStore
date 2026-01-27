@@ -43,7 +43,7 @@ class ProductCreateView(CreateView):
     model = Product
     form_class = ProductForm
     template_name = "catalog/product_form.html"
-    success_url = "/"
+    success_url = reverse_lazy('catalog:home')
 
     def form_valid(self, form):
         messages.success(self.request, f'Товар "{form.instance.name}" успешно добавлен!')
@@ -53,6 +53,7 @@ class ProductCreateView(CreateView):
         context = super().get_context_data(**kwargs)
         context['categories'] = Category.objects.all()  # ← добавляем категории
         return context
+
 
 class ProductUpdateView(UpdateView):
     """Форма редактирования товара."""
