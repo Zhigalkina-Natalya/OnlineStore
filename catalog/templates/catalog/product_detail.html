@@ -19,7 +19,11 @@
             <p>{{ product.description }}</p>
             <h4 class="text-success">Цена: {{ product.price }} ₽</h4>
 
-            <a href="{% url 'catalog:home' %}" class="btn btn-outline-primary mt-3">Назад в каталог</a>
+            <div class="mt-4">
+                <a href="{% url 'catalog:home' %}" class="btn btn-outline-primary">Назад в каталог</a>
+                <a href="{% url 'catalog:product_update' product.pk %}" class="btn btn-warning ms-2">Редактировать</a>
+                <a href="{% url 'catalog:product_delete' product.pk %}" class="btn btn-danger ms-2">Удалить</a>
+            </div>
         </div>
     </div>
 </div>
