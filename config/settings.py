@@ -41,7 +41,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # Другие установленные приложения
     "catalog",  # добавила приложение
-    'blog', # добавила приложение
+    "blog",  # добавила приложение
+    "users",  # добавила приложение
 ]
 
 MIDDLEWARE = [
@@ -132,3 +133,19 @@ MEDIA_URL = "/media/"  # — URL-адрес, по которому будут д
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")  # — путь к директории, где будут храниться загруженные файлы.
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+AUTH_USER_MODEL = "users.User"
+
+LOGIN_REDIRECT_URL = "catalog:home"
+LOGIN_URL = "users:login"
+LOGOUT_REDIRECT_URL = "catalog:home"
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.yandex.ru"
+EMAIL_PORT = 465
+EMAIL_USE_SSL = True
+EMAIL_USE_TLS = False
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+SERVER_EMAIL = EMAIL_HOST_USER

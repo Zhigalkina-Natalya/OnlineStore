@@ -1,3 +1,4 @@
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import TemplateView, ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
 from django.contrib import messages
@@ -10,25 +11,28 @@ class HomeView(ListView):
     """
     Контроллер главной страницы с отображением всех товаров.
     """
+
     model = Product
-    template_name = 'catalog/home.html'
-    context_object_name = 'products'
+    template_name = "catalog/home.html"
+    context_object_name = "products"
 
 
 class ProductDetailView(DetailView):
     """
     Контроллер страницы одного товара.
     """
+
     model = Product
-    template_name = 'catalog/product_detail.html'
-    context_object_name = 'product'
+    template_name = "catalog/product_detail.html"
+    context_object_name = "product"
 
 
 class ContactsView(TemplateView):
     """
     Контроллер страницы контактов.
     """
-    template_name = 'catalog/contacts.html'
+
+    template_name = "catalog/contacts.html"
 
     def post(self, request, *args, **kwargs):
         name = request.POST.get("name")
@@ -38,12 +42,15 @@ class ContactsView(TemplateView):
         return self.get(request, *args, **kwargs)
 
 
-class ProductCreateView(CreateView):
+class ProductCreateView(LoginRequiredMixin, CreateView):
     """Форма добавления нового товара."""
+
+    login_url = "users:login"
+    redirect_field_name = "next"
     model = Product
     form_class = ProductForm
     template_name = "catalog/product_form.html"
-    success_url = reverse_lazy('catalog:home')
+    success_url = reverse_lazy("catalog:home")
 
     def form_valid(self, form):
         messages.success(self.request, f'Товар "{form.instance.name}" успешно добавлен!')
@@ -51,12 +58,15 @@ class ProductCreateView(CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['categories'] = Category.objects.all()  # ← добавляем категории
+        context["categories"] = Category.objects.all()  # ← добавляем категории
         return context
 
 
-class ProductUpdateView(UpdateView):
+class ProductUpdateView(LoginRequiredMixin, UpdateView):
     """Форма редактирования товара."""
+
+    login_url = "users:login"
+    redirect_field_name = "next"
     model = Product
     form_class = ProductForm
     template_name = "catalog/product_form.html"
@@ -67,14 +77,17 @@ class ProductUpdateView(UpdateView):
 
     def get_success_url(self):
         # После редактирования перенаправляем на страницу товара
-        return reverse_lazy('catalog:product_detail', kwargs={'pk': self.object.pk})
+        return reverse_lazy("catalog:product_detail", kwargs={"pk": self.object.pk})
 
 
-class ProductDeleteView(DeleteView):
+class ProductDeleteView(LoginRequiredMixin, DeleteView):
     """Удаление товара с сообщением."""
+
+    login_url = "users:login"
+    redirect_field_name = "next"
     model = Product
     template_name = "catalog/product_confirm_delete.html"
-    success_url = reverse_lazy('catalog:home')
+    success_url = reverse_lazy("catalog:home")
 
     def delete(self, request, *args, **kwargs):
         obj = self.get_object()
