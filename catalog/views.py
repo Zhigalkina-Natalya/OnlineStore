@@ -1,4 +1,6 @@
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.shortcuts import get_object_or_404, redirect
+from django.views import View
 from django.views.generic import TemplateView, ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
 from django.contrib import messages
@@ -6,7 +8,6 @@ from catalog.models import Product, Category
 from .forms import ProductForm
 
 
-# Create your views here.
 class HomeView(ListView):
     """
     Контроллер главной страницы с отображением всех товаров.
@@ -43,7 +44,7 @@ class ContactsView(TemplateView):
 
 
 class ProductCreateView(LoginRequiredMixin, CreateView):
-    """Форма добавления нового товара."""
+    """Создание нового продукта. Автоматически привязываем владельца."""
 
     login_url = "users:login"
     redirect_field_name = "next"
@@ -53,6 +54,7 @@ class ProductCreateView(LoginRequiredMixin, CreateView):
     success_url = reverse_lazy("catalog:home")
 
     def form_valid(self, form):
+        form.instance.owner = self.request.user
         messages.success(self.request, f'Товар "{form.instance.name}" успешно добавлен!')
         return super().form_valid(form)
 
@@ -63,13 +65,20 @@ class ProductCreateView(LoginRequiredMixin, CreateView):
 
 
 class ProductUpdateView(LoginRequiredMixin, UpdateView):
-    """Форма редактирования товара."""
+    """Форма редактирования товара. Редактировать может только владелец."""
 
     login_url = "users:login"
     redirect_field_name = "next"
     model = Product
     form_class = ProductForm
     template_name = "catalog/product_form.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        obj = self.get_object()
+        if obj.owner != request.user:
+            messages.warning(request, "Вы не можете редактировать этот продукт.")
+            return redirect("catalog:home")
+        return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
         messages.success(self.request, f'Товар "{form.instance.name}" успешно обновлён!')
@@ -81,7 +90,7 @@ class ProductUpdateView(LoginRequiredMixin, UpdateView):
 
 
 class ProductDeleteView(LoginRequiredMixin, DeleteView):
-    """Удаление товара с сообщением."""
+    """Удаление товара с сообщением. Удалять может владелец или модератор"""
 
     login_url = "users:login"
     redirect_field_name = "next"
@@ -89,7 +98,31 @@ class ProductDeleteView(LoginRequiredMixin, DeleteView):
     template_name = "catalog/product_confirm_delete.html"
     success_url = reverse_lazy("catalog:home")
 
+    def dispatch(self, request, *args, **kwargs):
+        obj = self.get_object()
+        if obj.owner != request.user and not request.user.has_perm("catalog.delete_product"):
+            messages.warning(request, "Вы не можете удалить этот продукт.")
+            return redirect("catalog:home")
+        return super().dispatch(request, *args, **kwargs)
+
     def delete(self, request, *args, **kwargs):
         obj = self.get_object()
         messages.success(request, f'Товар "{obj.name}" удалён.')
         return super().delete(request, *args, **kwargs)
+
+
+class ProductUnpublishView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    """
+    Контроллер для снятия товара с публикации.
+    Снять с публикации может только модератор с правом catalog.can_unpublish_product.
+    """
+    permission_required = "catalog.can_unpublish_product"
+    raise_exception = True
+    login_url = "users:login"
+
+    def post(self, request, pk, *args, **kwargs):
+        product = get_object_or_404(Product, pk=pk)
+        product.is_published = False
+        product.save()
+        messages.success(request, f'Продукт "{product.name}" снят с публикации.')
+        return redirect("catalog:product_detail", pk=pk)
