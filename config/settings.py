@@ -140,6 +140,7 @@ LOGIN_REDIRECT_URL = "catalog:home"
 LOGIN_URL = "users:login"
 LOGOUT_REDIRECT_URL = "catalog:home"
 
+# EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"  # для проверки. все письма будут выводиться прямо в консоль
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.yandex.ru"
 EMAIL_PORT = 465
