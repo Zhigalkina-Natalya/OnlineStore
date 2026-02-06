@@ -1,10 +1,15 @@
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.core.cache import cache
 from django.shortcuts import get_object_or_404, redirect
+from django.utils.decorators import method_decorator
 from django.views import View
+from django.views.decorators.cache import cache_page
 from django.views.generic import TemplateView, ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
 from django.contrib import messages
+from django.conf import settings
 from catalog.models import Product, Category
+from .services import get_products_by_category
 from .forms import ProductForm
 
 
@@ -18,9 +23,11 @@ class HomeView(ListView):
     context_object_name = "products"
 
 
+@method_decorator(cache_page(getattr(settings, "CACHE_TTL", 60 * 15)), name="dispatch")
 class ProductDetailView(DetailView):
     """
     Контроллер страницы одного товара.
+    Вся страница кешируется на CACHE_TTL секунд.
     """
 
     model = Product
@@ -55,8 +62,10 @@ class ProductCreateView(LoginRequiredMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.owner = self.request.user
+        response = super().form_valid(form)
+        cache.delete(f"category_products:{form.instance.category_id}")
         messages.success(self.request, f'Товар "{form.instance.name}" успешно добавлен!')
-        return super().form_valid(form)
+        return response
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -81,8 +90,10 @@ class ProductUpdateView(LoginRequiredMixin, UpdateView):
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
+        response = super().form_valid(form)
+        cache.delete(f"category_products:{form.instance.category_id}")
         messages.success(self.request, f'Товар "{form.instance.name}" успешно обновлён!')
-        return super().form_valid(form)
+        return response
 
     def get_success_url(self):
         # После редактирования перенаправляем на страницу товара
@@ -107,6 +118,7 @@ class ProductDeleteView(LoginRequiredMixin, DeleteView):
 
     def delete(self, request, *args, **kwargs):
         obj = self.get_object()
+        cache.delete(f"category_products:{obj.category_id}")
         messages.success(request, f'Товар "{obj.name}" удалён.')
         return super().delete(request, *args, **kwargs)
 
@@ -126,3 +138,26 @@ class ProductUnpublishView(LoginRequiredMixin, PermissionRequiredMixin, View):
         product.save()
         messages.success(request, f'Продукт "{product.name}" снят с публикации.')
         return redirect("catalog:product_detail", pk=pk)
+
+
+class CategoryProductListView(ListView):
+    """
+    Список продуктов по категории с низкоуровневым кешированием.
+    """
+    template_name = "catalog/category_products.html"
+    context_object_name = "products"
+
+    def get_queryset(self):
+        category_id = self.kwargs.get("category_id")
+        cache_key = f"category_products:{category_id}"
+        products = cache.get(cache_key)
+
+        if products is None:
+            products = list(get_products_by_category(category_id))
+            cache.set(cache_key, products, getattr(settings, "CACHE_TTL", 60 * 15))
+        return products
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["category"] = Category.objects.get(pk=self.kwargs.get("category_id"))
+        return context

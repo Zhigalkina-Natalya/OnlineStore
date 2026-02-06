@@ -1,12 +1,17 @@
 {% extends 'catalog/base.html' %}
 {% load static %}
 
-{% block title %}Главная — SkyStore{% endblock %}
+{% block title %}{{ category.name }} — SkyStore{% endblock %}
 
 {% block content %}
-<div class="pricing-header text-center">
-    <h1 class="display-4">SkyStore</h1>
-    <p class="lead">SkyStore — отличный вариант хранения ваших плагинов и примеров кода, которые вы хотите продать.</p>
+<div class="pricing-header text-center mb-4">
+    <h1 class="display-5">{{ category.name }}</h1>
+    {% if category.description %}
+        <p class="lead text-muted">{{ category.description }}</p>
+    {% else %}
+        <p class="lead text-muted">Продукты в категории {{ category.name }}</p>
+    {% endif %}
+    <a href="{% url 'catalog:home' %}" class="btn btn-outline-primary mt-3">← Назад в каталог</a>
 </div>
 
 <div class="row text-center">
@@ -23,14 +28,11 @@
                 <p class="card-text text-muted">{{ product.description|truncatechars:100 }}</p>
                 <p class="fw-bold text-success">{{ product.price }} ₽</p>
                 <a href="{% url 'catalog:product_detail' product.pk %}" class="btn btn-outline-primary">Подробнее</a>
-                <a href="{% url 'catalog:category_products' product.category.id %}" class="btn btn-outline-secondary mt-2">
-                    Смотреть все товары в категории "{{ product.category.name }}"
-                </a>
             </div>
         </div>
     </div>
     {% empty %}
-    <p class="text-center">Пока нет товаров в каталоге.</p>
+    <p class="text-center">В этой категории пока нет товаров.</p>
     {% endfor %}
 </div>
 {% endblock %}
